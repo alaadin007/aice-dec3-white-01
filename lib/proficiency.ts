@@ -18,6 +18,8 @@ export function getEducationLevel(points: number): EducationLevel {
 }
 
 export function calculateProficiencyScores(assessments: AssessmentResult[]): ProficiencyScore[] {
+  if (!assessments || assessments.length === 0) return [];
+
   const groupedAssessments = assessments.reduce((groups, assessment) => {
     const subjectGroup = extractSubjectGroup(assessment.topic);
     if (!groups[subjectGroup]) {
@@ -29,7 +31,7 @@ export function calculateProficiencyScores(assessments: AssessmentResult[]): Pro
 
   return Object.entries(groupedAssessments).map(([subjectGroup, groupAssessments]) => {
     const score = groupAssessments.reduce((sum, assessment) => 
-      sum + assessment.learningOutcome.kiuAllocation, 0
+      sum + (assessment.learningOutcome?.kiuAllocation || 0), 0
     );
 
     return {
