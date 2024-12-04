@@ -1,4 +1,5 @@
 import { AssessmentResult, Team, TeamInvite, ShareableLink } from './types';
+import { mockAssessments, mockTeams } from './mock-data';
 
 const STORAGE_KEY = 'aice_assessments';
 const TEAMS_KEY = 'aice_teams';
@@ -8,8 +9,10 @@ const SHAREABLE_LINKS_KEY = 'aice_shareable_links';
 export function saveAssessment(assessment: AssessmentResult): void {
   try {
     const assessments = getAssessments();
-    assessments.unshift(assessment); // Add to beginning of array
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(assessments));
+    assessments.unshift(assessment);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(assessments));
+    }
   } catch (error) {
     console.error('Error saving assessment:', error);
     throw error;
@@ -17,12 +20,14 @@ export function saveAssessment(assessment: AssessmentResult): void {
 }
 
 export function getAssessments(): AssessmentResult[] {
+  if (typeof window === 'undefined') return mockAssessments;
+  
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return data ? JSON.parse(data) : mockAssessments;
   } catch (error) {
     console.error('Error reading assessments:', error);
-    return [];
+    return mockAssessments;
   }
 }
 
@@ -30,7 +35,9 @@ export function saveTeam(team: Team): void {
   try {
     const teams = getTeams();
     teams.push(team);
-    localStorage.setItem(TEAMS_KEY, JSON.stringify(teams));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TEAMS_KEY, JSON.stringify(teams));
+    }
   } catch (error) {
     console.error('Error saving team:', error);
     throw error;
@@ -38,22 +45,14 @@ export function saveTeam(team: Team): void {
 }
 
 export function getTeams(): Team[] {
+  if (typeof window === 'undefined') return mockTeams;
+
   try {
     const data = localStorage.getItem(TEAMS_KEY);
-    return data ? JSON.parse(data) : [];
+    return data ? JSON.parse(data) : mockTeams;
   } catch (error) {
     console.error('Error reading teams:', error);
-    return [];
-  }
-}
-
-export function getTeamById(id: string): Team | null {
-  try {
-    const teams = getTeams();
-    return teams.find(team => team.id === id) || null;
-  } catch (error) {
-    console.error('Error finding team:', error);
-    return null;
+    return mockTeams;
   }
 }
 
@@ -61,7 +60,9 @@ export function saveInvite(invite: TeamInvite): void {
   try {
     const invites = getInvites();
     invites.push(invite);
-    localStorage.setItem(INVITES_KEY, JSON.stringify(invites));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(INVITES_KEY, JSON.stringify(invites));
+    }
   } catch (error) {
     console.error('Error saving invite:', error);
     throw error;
@@ -69,6 +70,8 @@ export function saveInvite(invite: TeamInvite): void {
 }
 
 export function getInvites(): TeamInvite[] {
+  if (typeof window === 'undefined') return [];
+
   try {
     const data = localStorage.getItem(INVITES_KEY);
     return data ? JSON.parse(data) : [];
@@ -80,7 +83,7 @@ export function getInvites(): TeamInvite[] {
 
 export function createShareableLink(userId: string, password: string): ShareableLink {
   const link: ShareableLink = {
-    id: `share_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `share_${Date.now()}`,
     userId,
     password,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
@@ -88,9 +91,11 @@ export function createShareableLink(userId: string, password: string): Shareable
   };
 
   try {
-    const existingLinks = getShareableLinks();
-    existingLinks.push(link);
-    localStorage.setItem(SHAREABLE_LINKS_KEY, JSON.stringify(existingLinks));
+    const links = getShareableLinks();
+    links.push(link);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SHAREABLE_LINKS_KEY, JSON.stringify(links));
+    }
     return link;
   } catch (error) {
     console.error('Error creating shareable link:', error);
@@ -99,55 +104,13 @@ export function createShareableLink(userId: string, password: string): Shareable
 }
 
 export function getShareableLinks(): ShareableLink[] {
+  if (typeof window === 'undefined') return [];
+
   try {
     const data = localStorage.getItem(SHAREABLE_LINKS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
     console.error('Error reading shareable links:', error);
     return [];
-  }
-}
-
-export function validateShareableLink(linkId: string, password: string): boolean {
-  const links = getShareableLinks();
-  const link = links.find(l => l.id === linkId);
-
-  if (!link) return false;
-  if (new Date(link.expiresAt) < new Date()) return false;
-  return link.password === password;
-}
-
-export function getUserAssessments(userId: string): AssessmentResult[] {
-  const allAssessments = getAssessments();
-  return allAssessments.filter(assessment => 
-    assessment.userInfo.email === userId
-  );
-}
-
-export function updateTeam(team: Team): void {
-  try {
-    const teams = getTeams();
-    const index = teams.findIndex(t => t.id === team.id);
-    if (index !== -1) {
-      teams[index] = team;
-      localStorage.setItem(TEAMS_KEY, JSON.stringify(teams));
-    }
-  } catch (error) {
-    console.error('Error updating team:', error);
-    throw error;
-  }
-}
-
-export function updateInvite(invite: TeamInvite): void {
-  try {
-    const invites = getInvites();
-    const index = invites.findIndex(i => i.id === invite.id);
-    if (index !== -1) {
-      invites[index] = invite;
-      localStorage.setItem(INVITES_KEY, JSON.stringify(invites));
-    }
-  } catch (error) {
-    console.error('Error updating invite:', error);
-    throw error;
   }
 }
