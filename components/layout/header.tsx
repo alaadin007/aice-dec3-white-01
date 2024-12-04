@@ -3,8 +3,23 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export function Header() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userProfile');
+    router.push('/');
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200/50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
@@ -34,19 +49,42 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Button 
-            variant="ghost" 
-            size="lg"
-            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 font-medium"
-          >
-            Login
-          </Button>
-          <Button 
-            size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90 font-medium"
-          >
-            Register
-          </Button>
+          {isLoggedIn ? (
+            <>
+              <Button 
+                variant="ghost" 
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 font-medium"
+              >
+                Dashboard
+              </Button>
+              <Button 
+                onClick={handleLogout}
+                variant="ghost"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 font-medium"
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="ghost" 
+                size="lg"
+                onClick={() => router.push('/auth/login')}
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 font-medium"
+              >
+                Login
+              </Button>
+              <Button 
+                size="lg"
+                onClick={() => router.push('/auth/register')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90 font-medium"
+              >
+                Register
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
