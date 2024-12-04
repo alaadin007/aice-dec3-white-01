@@ -4,7 +4,7 @@ import { Team, TeamInvite } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Mail, Clock, Send } from 'lucide-react';
+import { Users, Mail, Clock, Send, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 
@@ -41,7 +41,7 @@ export function TeamSection({ teams, invites }: TeamSectionProps) {
       {pendingInvites.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Pending Invites</h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {pendingInvites.map((invite) => (
               <Card key={invite.id} className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
@@ -57,15 +57,12 @@ export function TeamSection({ teams, invites }: TeamSectionProps) {
                     <span>Received {formatDate(invite.createdAt)}</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="default"
-                    className="flex-1"
-                    onClick={() => router.push(`/teams/invite/${invite.id}`)}
-                  >
-                    View Invite
-                  </Button>
-                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => router.push(`/teams/invite/${invite.id}`)}
+                >
+                  View Invite
+                </Button>
               </Card>
             ))}
           </div>
@@ -75,7 +72,7 @@ export function TeamSection({ teams, invites }: TeamSectionProps) {
       {teams.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-medium">My Teams</h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {teams.map((team) => (
               <Card key={team.id} className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
@@ -94,18 +91,19 @@ export function TeamSection({ teams, invites }: TeamSectionProps) {
                     <span>Created {formatDate(team.createdAt)}</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1"
                     onClick={() => router.push(`/teams/${team.id}`)}
+                    className="w-full"
                   >
                     View Team
+                    <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                   <Button
                     variant="default"
-                    className="flex-1"
                     onClick={() => router.push(`/teams/${team.id}/upskill`)}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90"
                   >
                     <Send className="h-4 w-4 mr-2" />
                     Upskill Team
