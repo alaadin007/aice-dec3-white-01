@@ -6,8 +6,8 @@ import { Loader2 } from 'lucide-react';
 
 const quotes = [
   {
-    text: "Education is not preparation for life; education is life itself.",
-    author: "John Dewey"
+    text: "Education is not the filling of a pail, but the lighting of a fire.",
+    author: "W.B. Yeats"
   },
   {
     text: "The beautiful thing about learning is that no one can take it away from you.",
@@ -22,35 +22,30 @@ const quotes = [
     author: "Dr. Seuss"
   },
   {
-    text: "Education is not the filling of a pail, but the lighting of a fire.",
-    author: "W.B. Yeats"
+    text: "Learning never exhausts the mind.",
+    author: "Leonardo da Vinci"
   }
 ];
 
 export function LoadingQuote() {
   const [quote, setQuote] = useState(quotes[0]);
-  const [fadeIn, setFadeIn] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFadeIn(false);
-      setTimeout(() => {
-        setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
-        setFadeIn(true);
-      }, 500);
+      setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
     }, 3000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <Card className="p-8 space-y-4">
-      <div className="flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-      <div className={`text-center transition-opacity duration-500 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
-        <p className="text-lg italic text-muted-foreground">"{quote.text}"</p>
-        <p className="text-sm font-medium text-primary mt-2">— {quote.author}</p>
+    <Card className="p-8">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+        <div className="space-y-2">
+          <p className="text-lg italic">"{quote.text}"</p>
+          <p className="text-sm text-muted-foreground">— {quote.author}</p>
+        </div>
       </div>
     </Card>
   );
