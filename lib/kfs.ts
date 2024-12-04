@@ -91,8 +91,10 @@ export function calculateKFS(scores: ProficiencyScore[]): KnowledgeFusionScore {
   }
 
   // Store current total for future comparison
-  localStorage.setItem('previousKFSTotal', result.total.toString());
-  localStorage.setItem('lastKFSUpdate', new Date().toISOString());
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('previousKFSTotal', result.total.toString());
+    localStorage.setItem('lastKFSUpdate', new Date().toISOString());
+  }
 
   return result;
 }
@@ -106,6 +108,8 @@ function getKFSLevel(total: number): EducationLevel {
 }
 
 function getPreviousKFSTotal(): number | null {
+  if (typeof window === 'undefined') return null;
+
   const previousTotal = localStorage.getItem('previousKFSTotal');
   const lastUpdate = localStorage.getItem('lastKFSUpdate');
 
