@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Youtube, FileText, Link2, Plus, X } from 'lucide-react';
-import { getYouTubeTranscript } from '@/lib/searchapi';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Youtube, FileText, Link2, Plus, X } from "lucide-react";
+import { db } from "@/lib/firebase"; // Import initialized Firebase instance
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
 interface ContentSource {
   id: string;
-  type: 'text' | 'youtube' | 'file';
+  type: "text" | "youtube" | "file";
   content: string;
   source: string;
   wordCount: number;
@@ -25,8 +26,8 @@ interface ContentInputProps {
 
 export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
   const [sources, setSources] = useState<ContentSource[]>([]);
-  const [currentText, setCurrentText] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [currentText, setCurrentText] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -34,7 +35,7 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
     return text.trim().split(/\s+/).length;
   };
 
-  const addTextSource = () => {
+  const addTextSource = async () => {
     if (!currentText.trim()) {
       toast({
         title: "Empty Content",
@@ -46,14 +47,30 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
 
     const newSource: ContentSource = {
       id: `text_${Date.now()}`,
-      type: 'text',
+      type: "text",
       content: currentText,
-      source: 'Manual Input',
-      wordCount: getWordCount(currentText)
+      source: "Manual Input",
+      wordCount: getWordCount(currentText),
     };
 
-    setSources([...sources, newSource]);
-    setCurrentText('');
+    try {
+      // Save to Firestore
+      await addDoc(collection(db, "contentSources"), newSource);
+
+      setSources([...sources, newSource]);
+      setCurrentText("");
+      toast({
+        title: "Success",
+        description: "Text content added successfully!",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save content. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addYoutubeSource = async () => {
@@ -68,18 +85,27 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
 
     setLoading(true);
     try {
+      // Assuming you have a function to fetch the transcript
       const transcript = await getYouTubeTranscript(youtubeUrl);
       const newSource: ContentSource = {
         id: `youtube_${Date.now()}`,
-        type: 'youtube',
+        type: "youtube",
         content: transcript,
         source: youtubeUrl,
-        wordCount: getWordCount(transcript)
+        wordCount: getWordCount(transcript),
       };
 
+      // Save to Firestore
+      await addDoc(collection(db, "contentSources"), newSource);
+
       setSources([...sources, newSource]);
-      setYoutubeUrl('');
-    } catch (error: any) {
+      setYoutubeUrl("");
+      toast({
+        title: "Success",
+        description: "YouTube content added successfully!",
+        variant: "default",
+      });
+    } catch (error) {
       toast({
         title: "Error",
         description: error.message || "Failed to process YouTube video",
@@ -90,12 +116,13 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
     }
   };
 
-  const removeSource = (id: string) => {
-    setSources(sources.filter(source => source.id !== id));
+  const removeSource = async (id: string) => {
+    setSources(sources.filter((source) => source.id !== id));
+    // Optionally, add Firestore deletion logic here.
   };
 
-  const handleGenerateAssessment = () => {
-    const combinedContent = sources.map(source => source.content).join('\n\n');
+  const handleGenerateAssessment = async () => {
+    const combinedContent = sources.map((source) => source.content).join("\n\n");
     const totalWords = sources.reduce((sum, source) => sum + source.wordCount, 0);
 
     if (totalWords < 50) {
@@ -108,6 +135,25 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
     }
 
     onAssessmentGenerated(null, combinedContent);
+
+    // Optionally, save the combined content to Firestore
+    try {
+      await addDoc(collection(db, "assessments"), {
+        content: combinedContent,
+        createdAt: new Date(),
+      });
+      toast({
+        title: "Success",
+        description: "Assessment saved successfully!",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save assessment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -150,17 +196,6 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
             </Button>
           </div>
         </TabsContent>
-
-        <TabsContent value="file" className="space-y-4">
-          <Card className="p-8 border-dashed">
-            <div className="flex flex-col items-center space-y-4">
-              <FileText className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Coming soon! Support for PDF, Word, and Excel files.
-              </p>
-            </div>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {sources.length > 0 && (
@@ -168,7 +203,8 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Content Sources</h3>
             <Badge variant="outline">
-              {sources.reduce((sum, source) => sum + source.wordCount, 0)} total words
+              {sources.reduce((sum, source) => sum + source.wordCount, 0)} total
+              words
             </Badge>
           </div>
 
@@ -178,10 +214,8 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
-                      {source.type === 'youtube' ? (
+                      {source.type === "youtube" ? (
                         <Youtube className="h-4 w-4 text-red-500" />
-                      ) : source.type === 'file' ? (
-                        <FileText className="h-4 w-4 text-blue-500" />
                       ) : (
                         <Link2 className="h-4 w-4 text-green-500" />
                       )}
@@ -203,11 +237,7 @@ export function ContentInput({ onAssessmentGenerated }: ContentInputProps) {
             ))}
           </div>
 
-          <Button 
-            onClick={handleGenerateAssessment}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleGenerateAssessment} className="w-full" size="lg">
             Generate Assessment
           </Button>
         </div>
