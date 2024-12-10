@@ -34,8 +34,33 @@ export function TextInput({ onAssessmentGenerated }: TextInputProps) {
   const [processingAssessment, setProcessingAssessment] = useState(false);
   const { toast } = useToast();
 
+  const webhookUrl = "https://medacles.app.n8n.cloud/webhook-test/c852b035-809e-4edb-a5f9-3835ead9add6";
+
   const getWordCount = (text: string) => {
     return text.trim().split(/\s+/).length;
+  };
+
+  const sendToWebhook = async (data: any) => {
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook failed: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error("Error sending to webhook:", error);
+      toast({
+        title: "Webhook Error",
+        description: "Failed to send data to the webhook.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addTextSource = async () => {
@@ -60,6 +85,9 @@ export function TextInput({ onAssessmentGenerated }: TextInputProps) {
       await addDoc(collection(db, "contentSources"), newSource);
       setSources([...sources, newSource]);
       setCurrentText("");
+
+      // Send to webhook
+      await sendToWebhook(newSource);
 
       toast({
         title: "Success",
@@ -99,6 +127,9 @@ export function TextInput({ onAssessmentGenerated }: TextInputProps) {
       await addDoc(collection(db, "contentSources"), newSource);
       setSources([...sources, newSource]);
       setYoutubeUrl("");
+
+      // Send to webhook
+      await sendToWebhook(newSource);
 
       toast({
         title: "Video Added",
@@ -145,11 +176,16 @@ export function TextInput({ onAssessmentGenerated }: TextInputProps) {
       if (!response.ok) throw new Error("Failed to generate assessment");
       const assessment = await response.json();
 
-      await addDoc(collection(db, "assessments"), {
+      const savedAssessment = {
         content: combinedContent,
         assessment,
         createdAt: new Date(),
-      });
+      };
+
+      await addDoc(collection(db, "assessments"), savedAssessment);
+
+      // Send to webhook
+      await sendToWebhook(savedAssessment);
 
       toast({
         title: "Assessment Generated",
