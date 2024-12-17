@@ -35,7 +35,7 @@ export function TextInput({ onAssessmentGenerated }: TextInputProps) {
   const { toast } = useToast();
 
   const webhookUrl = "https://medacles.app.n8n.cloud/webhook-test/c852b035-809e-4edb-a5f9-3835ead9add6";
-
+                      
   const getWordCount = (text: string) => {
     return text.trim().split(/\s+/).length;
   };

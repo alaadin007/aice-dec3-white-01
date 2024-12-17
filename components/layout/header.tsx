@@ -49,7 +49,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-3">
-          {isLoggedIn ? (
+          {/* {isLoggedIn ? (
             <>
               <Button 
                 variant="ghost" 
@@ -84,7 +84,7 @@ export function Header() {
                 Register
               </Button>
             </>
-          )}
+          )} */}
         </div>
       </div>
     </header>
